@@ -1,0 +1,14 @@
+{
+  "name": "shopsphereali-backend",
+  "version": "1.0.0",
+  "description": "Backend for ShopSphereAli",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["ecommerce", "multi-vendor"],
+  "author": "Iftikhar Ali",
+  "license": "MIT"
+}
