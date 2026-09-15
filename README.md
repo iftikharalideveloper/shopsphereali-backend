@@ -14,10 +14,15 @@ npm install
 npm run dev
 
 
-### **3f. Git initialize karein**
+### **3f. Git initialize **
 
 ```bash
 git init
 git add .
 git commit -m "Day 1: Initial backend setup"
+
+### ** Github repo addedd and pushed code **
+git remote add origin https://github.com/../shopsphereali-frontend.git
+git branch -M main
+git push -u origin main
 
