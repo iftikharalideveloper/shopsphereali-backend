@@ -34,6 +34,7 @@ git push -u origin main
 - Git commit + push
 
 ### Dependencies Install
+npm install express
 npm install express dotenv cors helmet morgan express-rate-limit
 npm install -D nodemon
 
@@ -55,4 +56,8 @@ mkdir src/services
 ### .env file
 ### .env.example file // for developer
 
-### make src/app.js
+# create src/app.js and server.js created
+app.js (Express setup)
+server.js (Entry point)
+Server run + test
+Git commit + push
