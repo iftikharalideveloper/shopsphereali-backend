@@ -61,3 +61,41 @@ app.js (Express setup)
 server.js (Entry point)
 Server run + test
 Git commit + push
+
+=============================================================
+#Day 3: Prisma + Database Models
+PostgreSQL database setup
+Prisma install npm install @prisma/client (production database query)
+npm install -D prisma (development tool:- migration and schema)
+Prisma initialize npx prisma init
+✅ PostgreSQL installed
+✅ Prisma installed
+✅ Prisma 7.10.0
+✅ @prisma/client 7.10.0
+✅ prisma init
+✅ Prisma 7 config
+✅ DATABASE_URL configured
+✅ schema created, Prisma schema (User, Seller, Category, Wallet)
+✅ migration successful, Migration run
+    Database tables check, database.js
+✅ PostgreSQL schema synchronized
+✅ Prisma Client created
+✅ Node → Prisma → PostgreSQL tested
+✅ test file
+Total Work for Day3 has been done below the points.
+PostgreSQL check (pg_isready)
+
+Database  (shopsphereali_db)
+
+Prisma install + init 
+
+.env update  (DATABASE_URL)
+
+Prisma schema created (User, Seller, Category, Wallet)
+
+Migration run 
+
+Database connection tested
+
+Git commit + push
+===============================================================

@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// User Model
+// ============================================
+model User {
+  id               Int      @id @default(autoincrement())
+  name             String
+  email            String   @unique
+  password         String
+  role             String   @default("buyer") // buyer, seller, affiliate, admin
+  avatar           String?
+  phone            String?
+  status           String   @default("offline") // online, offline, away
+  lastSeen         DateTime?
+  emailVerified    Boolean  @default(false)
+  referralCode     String   @unique
+  referredBy       Int?
+  referralEarnings Float    @default(0)
+  walletBalance    Float    @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  seller           Seller?
+  wallet           Wallet?
+  referrals        User[]   @relation("UserReferrals")
+  referrer         User?    @relation("UserReferrals", fields: [referredBy], references: [id])
+
+  @@map("users")
+}
+
+// ============================================
+// Seller Model
+// ============================================
+model Seller {
+  id          Int      @id @default(autoincrement())
+  storeName   String
+  storeSlug   String   @unique
+  description String?
+  logo        String?
+  banner      String?
+  status      String   @default("pending") // pending, approved, rejected
+  commission  Float    @default(10.0) // 10% platform fee
+  balance     Float    @default(0.0)
+  userId      Int      @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("sellers")
+}
+
+// ============================================
+// Category Model
+// ============================================
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  parentId    Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  parent      Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+
+  @@map("categories")
+}
+
+// ============================================
+// Wallet Model
+// ============================================
+model Wallet {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("wallets")
+}
