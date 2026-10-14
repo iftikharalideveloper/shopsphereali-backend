@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
+// ============================================
+// Prisma Configuration
+// ============================================
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -38,6 +36,18 @@ model User {
   wallet           Wallet?
   referrals        User[]   @relation("UserReferrals")
   referrer         User?    @relation("UserReferrals", fields: [referredBy], references: [id])
+  addresses        Address[]
+  products         Product[]
+  orders           Order[]
+  reviews          Review[]
+  cartItems        CartItem[]
+  wishlist         Wishlist[]
+  messages         Message[]
+  conversations    ConversationMember[]
+  notifications    Notification[]
+  referralEarningsList ReferralEarning[] @relation("ReferrerEarnings")
+  referredEarnings ReferralEarning[] @relation("ReferredEarnings")
+  payouts          Payout[]
 
   @@map("users")
 }
@@ -53,7 +63,7 @@ model Seller {
   logo        String?
   banner      String?
   status      String   @default("pending") // pending, approved, rejected
-  commission  Float    @default(10.0) // 10% platform fee
+  commission  Float    @default(10.0)
   balance     Float    @default(0.0)
   userId      Int      @unique
   createdAt   DateTime @default(now())
@@ -61,6 +71,9 @@ model Seller {
 
   // Relations
   user        User     @relation(fields: [userId], references: [id])
+  products    Product[]
+  orders      Order[]
+  payouts     Payout[]
 
   @@map("sellers")
 }
@@ -81,22 +94,330 @@ model Category {
   // Relations
   parent      Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryToCategory")
+  products    Product[]
 
   @@map("categories")
 }
 
 // ============================================
-// Wallet Model
+// Product Model
 // ============================================
-model Wallet {
+model Product {
+  id           Int       @id @default(autoincrement())
+  name         String
+  slug         String    @unique
+  description  String
+  price        Float
+  discount     Float     @default(0)
+  stock        Int       @default(0)
+  images       String[]
+  videos       String[]
+  tags         String[]
+  rating       Float     @default(0)
+  totalReviews Int       @default(0)
+  status       String    @default("active") // active, inactive, out_of_stock
+  sellerId     Int
+  categoryId   Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  seller       Seller    @relation(fields: [sellerId], references: [id])
+  category     Category  @relation(fields: [categoryId], references: [id])
+  reviews      Review[]
+  cartItems    CartItem[]
+  wishlist     Wishlist[]
+  orderItems   OrderItem[]
+  user         User      @relation(fields: [userId], references: [id])
+  userId       Int      
+
+  @@map("products")
+}
+
+// ============================================
+// CartItem Model
+// ============================================
+model CartItem {
   id        Int      @id @default(autoincrement())
-  userId    Int      @unique
-  balance   Float    @default(0)
+  quantity  Int      @default(1)
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId]) //no duplicate of same product
+  @@map("cart_items")
+}
+
+// ============================================
+// Wishlist Model
+// ============================================
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("wishlists")
+}
+
+// ============================================
+// Address Model
+// ============================================
+model Address {
+  id        Int      @id @default(autoincrement())
+  label     String
+  street    String
+  city      String
+  state     String
+  country   String
+  zipCode   String
+  phone     String
+  isDefault Boolean  @default(false)
+  userId    Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   user      User     @relation(fields: [userId], references: [id])
 
+  @@map("addresses")
+}
+
+// ============================================
+// Order Model
+// ============================================
+model Order {
+  id             Int       @id @default(autoincrement())
+  orderNumber    String    @unique
+  status         String    @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  totalAmount    Float
+  platformFee    Float     @default(0)
+  sellerAmount   Float     @default(0)
+  commissionRate Float     @default(10.0)
+  paymentStatus  String    @default("pending") // pending, paid, failed, refunded
+  paymentMethod  String    // stripe, jazzcash, easypaisa, cod
+  shippingAddress Json
+  userId         Int
+  sellerId       Int?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  user           User      @relation(fields: [userId], references: [id])
+  seller         Seller?   @relation(fields: [sellerId], references: [id])
+  items          OrderItem[]
+  referralEarning ReferralEarning?
+
+  @@map("orders")
+}
+
+// ============================================
+// OrderItem Model
+// ============================================
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  quantity  Int
+  price     Float
+  productId Int
+  orderId   Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  product   Product  @relation(fields: [productId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@map("order_items")
+}
+
+// ============================================
+// Review Model
+// ============================================
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+// ============================================
+// Conversation Model (Chat Room)
+// ============================================
+model Conversation {
+  id            Int                  @id @default(autoincrement())
+  isGroup       Boolean              @default(false)
+  name          String?
+  avatar        String?
+  lastMessage   String?
+  lastMessageAt DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  // Relations
+  members       ConversationMember[]
+  messages      Message[]
+
+  @@map("conversations")
+}
+
+// ============================================
+// ConversationMember Model
+// ============================================
+model ConversationMember {
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  conversationId Int
+  role           String       @default("member") // admin, member
+  lastReadAt     DateTime?
+  isMuted        Boolean      @default(false)
+  isArchived     Boolean      @default(false)
+  joinedAt       DateTime     @default(now())
+
+  // Relations
+  user           User         @relation(fields: [userId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@unique([userId, conversationId])
+  @@map("conversation_members")
+}
+
+// ============================================
+// Message Model
+// ============================================
+model Message {
+  id             Int          @id @default(autoincrement())
+  content        String?
+  type           String       @default("text") // text, image, file, system
+  fileUrl        String?
+  fileName       String?
+  fileSize       Int?
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  senderId       Int
+  conversationId Int
+  replyToId      Int?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  sender         User         @relation(fields: [senderId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  replyTo        Message?     @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies        Message[]    @relation("MessageReplies")
+
+  @@map("messages")
+}
+
+// ============================================
+// Notification Model
+// ============================================
+model Notification {
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String
+  type      String   // order, payment, chat, system
+  isRead    Boolean  @default(false)
+  userId    Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// ============================================
+// Wallet Model
+// ============================================
+model Wallet {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  balance      Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id])
+  transactions WalletTransaction[]
+
   @@map("wallets")
+}
+
+// ============================================
+// WalletTransaction Model
+// ============================================
+model WalletTransaction {
+  id          Int      @id @default(autoincrement())
+  walletId    Int
+  amount      Float
+  type        String   // credit, debit
+  source      String   // referral, order, withdrawal
+  description String
+  status      String   @default("completed")
+  createdAt   DateTime @default(now())
+
+  // Relations
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+
+  @@map("wallet_transactions")
+}
+
+// ============================================
+// ReferralEarning Model
+// ============================================
+model ReferralEarning {
+  id          Int      @id @default(autoincrement())
+  referrerId  Int
+  referredId  Int
+  orderId     Int      @unique
+  amount      Float
+  percentage  Float
+  status      String   @default("pending") // pending, paid
+  createdAt   DateTime @default(now())
+
+  // Relations
+  referrer    User     @relation("ReferrerEarnings", fields: [referrerId], references: [id])
+  referred    User     @relation("ReferredEarnings", fields: [referredId], references: [id])
+  order       Order    @relation(fields: [orderId], references: [id])
+
+  @@map("referral_earnings")
+}
+
+// ============================================
+// Payout Model
+// ============================================
+model Payout {
+  id          Int      @id @default(autoincrement())
+  amount      Float
+  status      String   @default("pending") // pending, processing, completed, failed
+  method      String   // bank, jazzcash, easypaisa
+  sellerId    Int
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  seller      Seller   @relation(fields: [sellerId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("payouts")
 }
